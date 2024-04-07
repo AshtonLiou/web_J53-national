@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南港展覽館接駁專車系統-路網圖</title>
+    <link rel="shortcut icon" href="./img/NECC_logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="./bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="app">
+
+        <header>
+            <nav class="p-3 d-flex align-items-center bg-light">
+                <img src="./img/NECC_logo.png" alt="" style="height: 4vh; margin: 2vh 2vw; transform: scale(2);">
+                <h2 class="mx-3" style="font-weight: 600;">南港展覽館接駁專車系統</h2>
+                <a href="./index.html" class="btn btn-info rootBtn disabled mx-3">&#9673; 路網圖</a>
+                <a href="./login.html" class="btn rootBtn mx-3">&#9881; 管理系統</a>
+            </nav>
+        </header>
+
+        <main>
+
+            <div class="mapContainer my-5">
+
+                <div class="card w-25 p-1 shadow">
+                    <label for="busRange" class="text-center">地圖每列顯示{{ data.row }}站</label>
+                    <input type="range" min="1" max="5" id="busRange" v-model="data.row" class="custom-range"
+                        @click="getData">
+                </div>
+
+                <div class="map shadow mt-4" style="width: 65vw;"
+                    :style="{ '--w': ` calc((65vw - 20em) / ${data.row})` }">
+                    <div class="row" v-for="(row, i) in data.stationData" :class="i % 2 ? 'left-row' : 'right-row'"
+                        style="width: 65wv - 20em; display: flex;">
+                        <div class="border-left"></div>
+                        <div class="station" v-for="(station, i) in row">
+
+                            <div class="mapIcon"></div>
+                            <div class="data">
+                                <p>{{ station.wait }}</p>
+                                <p>約{{ station.time }}分鐘</p>
+                                <p>{{ station.name }}</p>
+                            </div>
+
+                        </div>
+                        <div class="border-right"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="./jquery/jquery.js"></script>
+    <script src="./jquery/vue-3.2.31.global.js"></script>
+    <script src="./bootstrap/bootstrap.js"></script>
+    <script>
+
+        const { reactive, onMounted } = Vue
+        Vue.createApp({
+
+            setup() {
+
+                let data = reactive({
+                    row: 3,
+                    busData: [],
+                    stationData: [],
+                    stationHTML: []
+                })
+
+                let station, busData = undefined
+
+                const getData = async () => {
+                    await $.getJSON("./api/get.php", { mode: "getStationData" }, (r) => {
+                        station = structuredClone(r)
+                        procData()
+                    })
+                    // await $.getJSON("./api/get.php", { mode: "getBusData" }, (r) => {
+                    //     bus = structuredClone(r)
+                    //     // procData()
+                    // })
+                }
+
+                const procData = () => {
+                    data.stationData.splice(0)
+                    let rowCount = Math.ceil(station.length / data.row)
+                    for (let i = 0; i < rowCount; i++) {
+                        data.stationData.push(station.slice(i * data.row, (i + 1) * data.row))
+                    }
+                }
+
+                onMounted(() => {
+                    getData()
+                })
+
+                return {
+                    data,
+                    getData,
+                    procData
+                }
+            }
+
+        }).mount("#app")
+
+    </script>
+
+</body>
+
+</html>
